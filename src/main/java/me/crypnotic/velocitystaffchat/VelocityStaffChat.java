@@ -20,7 +20,6 @@ import com.velocitypowered.api.event.player.PlayerChatEvent;
 import com.velocitypowered.api.event.player.PlayerChatEvent.ChatResult;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.Plugin;
-import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.ServerConnection;
@@ -28,29 +27,25 @@ import com.velocitypowered.api.proxy.ServerConnection;
 import lombok.Getter;
 import net.kyori.text.TextComponent;
 import net.kyori.text.format.TextColor;
-import net.kyori.text.serializer.ComponentSerializers;
+import net.kyori.text.serializer.legacy.LegacyComponentSerializer;
 
 @Plugin(id = BuildInfo.PLUGIN_ID, name = BuildInfo.PLUGIN_NAME, version = BuildInfo.PLUGIN_VERSION)
 public class VelocityStaffChat implements Command {
 
+    @Inject
     @Getter
-    private final ProxyServer proxy;
+    private ProxyServer proxy;
+    @Inject
     @Getter
-    private final Logger logger;
+    private Logger logger;
+    @Inject
     @Getter
-    private final Path configPath;
+    private Path configPath;
 
     private Toml toml;
     private String messageFormat;
     private String toggleFormat;
     private Set<UUID> toggledPlayers;
-
-    @Inject
-    public VelocityStaffChat(ProxyServer proxy, Logger logger, @DataDirectory Path configPath) {
-        this.proxy = proxy;
-        this.logger = logger;
-        this.configPath = configPath;
-    }
 
     @Subscribe
     public void onProxyInitialize(ProxyInitializeEvent event) {
@@ -133,13 +128,11 @@ public class VelocityStaffChat implements Command {
     private void sendStaffMessage(Player player, ServerConnection server, String message) {
         proxy.getAllPlayers().stream().filter(target -> target.hasPermission("staffchat")).forEach(target -> {
             target.sendMessage(color(messageFormat.replace("{player}", player.getUsername())
-                    .replace("{server}", server != null ? server.getServerInfo().getName() : "N/A")
-                    .replace("{message}", message)));
+                    .replace("{server}", server != null ? server.getServerInfo().getName() : "N/A").replace("{message}", message)));
         });
     }
 
-    @SuppressWarnings("deprecation")
     private TextComponent color(String text) {
-        return ComponentSerializers.LEGACY.deserialize(text, '&');
+        return LegacyComponentSerializer.INSTANCE.deserialize(text, '&');
     }
 }
